@@ -7,18 +7,27 @@ const router = express.Router();
 
 // Signup
 router.post("/signup", async (req, res) => {
-  const { name, email, password } = req.body;
+  try {
+    const { name, email, password } = req.body;
 
-  const hashedPassword = await bcrypt.hash(password, 10);
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: "User already exists" });
+    }
 
-  const user = new User({
-    name,
-    email,
-    password: hashedPassword
-  });
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-  await user.save();
-  res.json({ message: "User registered" });
+    const user = new User({
+      name,
+      email,
+      password: hashedPassword
+    });
+
+    await user.save();
+    res.json({ message: "User registered" });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
 });
 
 // Login
